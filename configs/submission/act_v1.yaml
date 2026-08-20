@@ -1,0 +1,42 @@
+# BiManiFlow ACT v1 submission config (non-sensitive, versioned)
+submission:
+  policy_name: BiManiFlow_ACT_v1
+  action_type: joint
+  endpoint_count: 1
+
+policy:
+  adapter: XPolicyLab/policy/ACT   # upstream, unmodified
+  checkpoint_repo: RoboDojo-Benchmark/RoboDojo
+  checkpoint_revision: abf44de4b10b5c7efdc68f07630157329dbbcb7f
+  checkpoint_path: ckpt/RoboDojo/ACT/act-RoboDojo-push_T/arx_x5-100-joint
+  weights_file: policy_epoch_6000_seed_0.ckpt
+  weights_sha256: d41ea255207ceea13b7aa1707d073aae7c38d1b826b5f08b0d82588ad3c41b1a
+  dataset_stats_sha256: 642f47f1f4052a9e1ee4d7099e6a40edefc29320b1a4853ed0cc373cf5461806
+  best_seed: 0
+
+runtime:
+  env: bimaniflow-act
+  python: "3.11"
+  torch: 2.7.0+cu128
+  cuda_wheel: "12.8"
+  websockets: 17.0.1
+  policy_bind: 127.0.0.1
+  policy_port: 6061
+  action_dim: 14
+  chunk_size: 50
+  temporal_agg: true
+  temporal_agg_k: 0.01
+  cameras: [cam_head, cam_right_wrist, cam_left_wrist]
+  embodiment_env_cfg: arx_x5
+  robot: dual_x5
+
+simulation_stack:
+  image: goai-bimaniflow/robodojo:36bfcb7
+  image_id: sha256:cc083b0887ecc49f721c8c81bae4821e36355291c7acce2d43dee1e30d3c7c6a
+  robodojo_commit: 36bfcb7c580b149c6e39ed2eb77d60689152e570
+  xpolicylab_commit: 432f82b1758c5b1202e42a3dfe014546dbc50871
+  isaaclab_commit: afca7b09d60d8beb9c1cb28b43066499940b969b
+  curobo_commit: d17b54ce32cba095c0b000c4c58777075d11de0e
+
+freeze:
+  note: "评测期间不得更换 checkpoint / action_type / 协议行为 / 服务实现（官方规则）"

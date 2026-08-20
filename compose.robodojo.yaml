@@ -1,0 +1,66 @@
+# BiManiFlow Phase 3A — outer compose wrapper around the OFFICIAL RoboDojo image.
+# The upstream Dockerfile is unmodified; this file only codifies the documented
+# `docker run` flags from third_party/RoboDojo/docker/README.md (step 5).
+# All endpoints are loopback-only. No public exposure.
+
+name: goai-bimaniflow
+
+services:
+  policy-server:
+    image: goai-bimaniflow/robodojo:36bfcb7
+    container_name: bimaniflow-policy-server
+    network_mode: host
+    ipc: host
+    init: true
+    environment:
+      PYTHONWARNINGS: ignore::UserWarning
+      CUDA_VISIBLE_DEVICES: "0"
+    command: >
+      python XPolicyLab/setup_policy_server.py
+      --config_path XPolicyLab/policy/demo_policy/deploy.yml
+      --overrides
+        host=127.0.0.1
+        port=${BIMANIFLOW_POLICY_PORT:-6060}
+        bench_name=RoboDojo
+        task_name=${BIMANIFLOW_TASK:-push_T}
+        ckpt_name=smoke
+        env_cfg_type=arx_x5
+        seed=0
+        policy_name=demo_policy
+        action_type=${BIMANIFLOW_ACTION_TYPE:-joint}
+
+  sim-client:
+    image: goai-bimaniflow/robodojo:36bfcb7
+    container_name: bimaniflow-sim-client
+    network_mode: host
+    ipc: host
+    init: true
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["0"]
+              capabilities: [gpu, compute, utility, graphics]
+    environment:
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: all
+    volumes:
+      - ${GOAI_DATA_ROOT:-/data/goai-bimaniflow/assets}/Assets:/workspace/RoboDojo/Assets:ro
+      - ${GOAI_DATA_ROOT:-/data/goai-bimaniflow/assets}/Assets:${GOAI_DATA_ROOT:-/data/goai-bimaniflow/assets}/Assets:ro
+      - ${BIMANIFLOW_ARTIFACT_ROOT:-/data/goai-bimaniflow/artifacts}/phase3a/eval_result:/workspace/RoboDojo/eval_result
+      - ${BIMANIFLOW_CACHE_ROOT:-/data/goai-bimaniflow/cache}/warp:/root/.cache/warp
+      - ${BIMANIFLOW_CACHE_ROOT:-/data/goai-bimaniflow/cache}/ov:/root/.cache/ov
+      - ${BIMANIFLOW_CACHE_ROOT:-/data/goai-bimaniflow/cache}/ov-data:/root/.local/share/ov
+      - ${BIMANIFLOW_CACHE_ROOT:-/data/goai-bimaniflow/cache}/nvidia:/root/.cache/nvidia
+      - ${BIMANIFLOW_CACHE_ROOT:-/data/goai-bimaniflow/cache}/nv:/root/.nv
+    command: >
+      bash scripts/robodojo.sh client
+      --task ${BIMANIFLOW_TASK:-push_T}
+      --policy-name demo_policy
+      --policy-host 127.0.0.1
+      --policy-port ${BIMANIFLOW_POLICY_PORT:-6060}
+      --ckpt smoke
+      --eval-num 1
+      --action-type ${BIMANIFLOW_ACTION_TYPE:-joint}
+      --env-gpu 0

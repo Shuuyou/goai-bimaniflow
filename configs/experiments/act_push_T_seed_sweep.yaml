@@ -1,0 +1,39 @@
+# Phase 3C-S: ACT push_T clean seed sweep — project-level run config.
+# Does NOT copy or modify any official task config; references only.
+experiment: act_push_T_seed_sweep
+date: 2026-08-17
+fixed:
+  dimension: generalization
+  task: push_T            # registry name; GOAI slug push-t
+  random: false
+  eval_num: 1
+  env_cfg_type: arx_x5    # env_cfg/arx_x5.yml -> robot dual_x5
+  action_type: joint
+  action_dim: 14          # 6+6 arm + 1+1 gripper (dual_x5)
+  chunk_size: 50
+  temporal_agg: true
+  temporal_agg_k: 0.01
+  step_lim: 600
+  robodojo_commit: 36bfcb7c580b149c6e39ed2eb77d60689152e570
+  xpolicylab_commit: 432f82b1758c5b1202e42a3dfe014546dbc50871
+  image: goai-bimaniflow/robodojo:36bfcb7
+  image_id: sha256:cc083b0887ecc49f721c8c81bae4821e36355291c7acce2d43dee1e30d3c7c6a
+  dataset_revision: abf44de4b10b5c7efdc68f07630157329dbbcb7f
+  assets_revision: 8ca75af1ff79c30c4b9fbc552b99bac206bc014d
+  ckpt_dir: /data/goai-bimaniflow/models/ACT/push_T/ckpt/RoboDojo/ACT/act-RoboDojo-push_T/arx_x5-100-joint
+  normalization: dataset_stats.pkl  # shared by all seeds, sha256 642f47f1...
+  policy_env: bimaniflow-act
+  policy_host: 127.0.0.1
+  policy_port: 6061
+  warmup: one uncounted forward after server start
+  video: official default (3 cameras)
+  timeout_s: 5400
+  sim_seed: 0             # eval seed default -> identical pre-seeded layout file
+variable:
+  checkpoint_seed: [1, 2] # seed_0 already evaluated in Phase 3B (not re-run)
+notes:
+  - Layout determinism: seed_manager uses config seed=0 and the same pre-seeded
+    layout JSON Assets/Eval_Layout/RoboDojo/arx_x5/0/push_T_0.json for all runs
+    (layout_id 0). PhysX stepping is deterministic given the same layout and
+    actions, but host timing/GPU nondeterminism may introduce minor drift:
+    ENVIRONMENT_SEED_LAYOUT_CONTROLLED__PHYSICS_NOT_BITWISE_DETERMINISTIC.
